@@ -13,7 +13,7 @@ go run ./scripts/import.go -path items-sale.csv
 The CSV file must have the following format:
 
 ```csv
-name,qty,price
+description,qty,price
 item,1,200
 ```
 
