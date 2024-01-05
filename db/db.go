@@ -3,6 +3,7 @@ package db
 import (
 	gorm_logrus "github.com/onrik/gorm-logrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/tecnologer/pos/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -36,7 +37,10 @@ func Connect() error {
 
 func Connection() *gorm.DB {
 	if cnn == nil {
-		_ = Connect()
+		err := Connect()
+		if err != nil {
+			logrus.WithError(err).Fatal("error connecting to database")
+		}
 	}
 
 	return cnn

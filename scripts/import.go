@@ -5,13 +5,13 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/tecnologer/GarageSale/data"
-	"github.com/tecnologer/GarageSale/db"
-	"github.com/tecnologer/GarageSale/models"
+	"github.com/tecnologer/pos/data"
+	"github.com/tecnologer/pos/db"
+	"github.com/tecnologer/pos/models"
 	"os"
 )
 
-var path = flag.String("path", "/Users/dray/Downloads/items-garage-sale.csv", "Path to csv file")
+var path = flag.String("path", "items.csv", "Path to csv file")
 
 func main() {
 	flag.Parse()

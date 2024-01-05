@@ -23,6 +23,12 @@ Run the server with the following command:
 ```bash
     go run main.go -port 8080
 ```
+ 
+## Run with Docker
+```bash
+  docker build --tag pos .
+  docker run --net=host --rm --name pos pos
+```
 
 ## Screenshots
 
