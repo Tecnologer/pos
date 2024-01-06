@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <title>Create Item</title>
+</head>
+<body>
+
+<!-- button to return the index-->
+<div class="container mt-5">
+  <a href="/" class="btn btn-primary">Back</a>
+</div>
+
+<div class="container mt-5">
+  <h2>Create Item</h2>
+
+  <form id="createItemForm">
+    <div class="form-group">
+        <label for="items">
+          <span>Format: description,quantity,price</span>
+        </label>
+      <textarea class="form-control" id="items" rows="4"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="saveItem()">Save</button>
+  </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  function saveItem() {
+    // Get user from cookie
+    const user = getCookie('username');
+
+    // Get content of the textarea
+    const itemsContent = document.getElementById('items').value;
+
+    if (!itemsContent) {
+      alert('Please enter items');
+      return;
+    }
+
+    // Make a POST request to the server
+    fetch(`/create?user=${user}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(itemsContent)
+    })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+            })
+            .then(() => {
+              console.log('Item saved successfully:');
+              document.getElementById("items").value= "";
+              document.getElementById("items").focus();
+              // You can add further actions after the successful save if needed
+            })
+            .catch(error => {
+              console.error('Error:', error);
+            });
+  }
+
+  // Function to get the value of a cookie by its name
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  document.addEventListener('DOMContentLoaded', (event) => {
+    document.getElementById("items").focus();
+  });
+</script>
+
+</body>
+</html>

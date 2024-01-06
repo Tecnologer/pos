@@ -97,6 +97,17 @@ func (pd *ProductData) Sell(checkoutID uint, product *models.Product) error {
 	return nil
 }
 
+func (pd *ProductData) Get(id uint) (*models.Product, error) {
+	var product *models.Product
+
+	err := pd.cnn.First(&product, id).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, errors.Wrap(err, "product.get: error getting product")
+	}
+
+	return product, nil
+}
+
 func title(s string) string {
 	return cases.Title(language.Spanish).String(s)
 }

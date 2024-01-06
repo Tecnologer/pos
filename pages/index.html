@@ -32,7 +32,7 @@
             <div class="col-12"> <!-- Use Bootstrap's col to span the full width -->
                 <form onsubmit="performSearch(); return false;">
                     <div class="input-group mb-3">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Escribe codigo o descripcion" aria-label="Description" aria-describedby="button-addon">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Escribe codigo o descripcion" aria-label="Description" aria-describedby="button-addon" onfocus="selectText()">
                         <div class="input-group-append">
                             <button class="btn btn-primary" type="submit" id="button-addon">
                                 <i class="fas fa-search"></i>
@@ -170,14 +170,16 @@
                     resultsTableBody.innerHTML = ''; // Clear current results
                     items = data;
                     data.forEach(item => {
-                        item.inCart = 0
-
                         let row = resultsTableBody.insertRow();
                         let cellID = row.insertCell(0);
                         let cellDesc = row.insertCell(1);
                         let cellQty = row.insertCell(2);
                         let cellPrice = row.insertCell(3);
                         let cellActions = row.insertCell(4);
+
+                        row.onclick = function() {
+                            addToCart(item);
+                        };
 
                         cellID.textContent = item.id;
                         cellID.hidden = true;
@@ -219,8 +221,7 @@
                     });
                 })
                 .catch(error => {
-                    console.error('Error fetching search results:', error)
-                    updateAlertMessage(error.message);
+                    catchError(error);
                 });
         }
 
@@ -228,6 +229,10 @@
             let cartItem = searchInCart(item.id);
 
             if (cartItem) {
+                if (cartItem.qty <= item.qty) {
+                    return
+                }
+
                 // Item already in cart, just increment the quantity
                 cartItem.qty++;
             } else {
@@ -256,6 +261,7 @@
             console.log("counter", qty)
             cart.count+=qty;
             document.getElementById('cartCounter').textContent = cart.count;
+            setCartCookie(); // Save the cart to cookie
         }
 
         function updateCartModal() {
@@ -330,7 +336,21 @@
                 cartItems.appendChild(listItem);
 
                 let itemList = searchInItems(item.id);
-                if (item.qty >= itemList.qty) {
+                if (!itemList) {
+                    retrieveFromServer(item.id)
+                        .then(data => {
+                            // Handle the retrieved data
+                            itemList = data;
+
+                            if (item.qty >= itemList.qty) {
+                                addButton.style.opacity = '0';
+                            }
+                        })
+                        .catch(error => {
+                            // Handle errors
+                            catchError(error);
+                        });
+                }else if (item.qty >= itemList.qty) {
                     addButton.style = 'opacity:0;'
                 }
             });
@@ -426,13 +446,15 @@
                         total: 0,
                         paymentMethod: ""
                     }
+
+                    setCartCookie(); // Save the cart to cookie
+
                     performSearch(); // Refresh the search results
                     // close checkout modal
                     $('#cartModal').modal('hide');
                 })
                 .catch((error) => {
-                    console.error('Error: ', error);
-                    updateAlertMessage(error.message);
+                    catchError(error);
                     // Handle errors, such as showing the user an error message
                 });
         });
@@ -452,6 +474,7 @@
                 $('#usernameModal').modal('show');
             } else{
                 updateUserNameLabel(username);
+                getCartCookie();
             }
         });
 
@@ -462,6 +485,20 @@
                 $('#usernameModal').modal('hide'); // Hide the modal
                 updateUserNameLabel(username);
             }
+        }
+
+        function setCartCookie() {
+            setCookie('cart', JSON.stringify(cart), 2); // Set cookie for 2 hours
+        }
+
+        function getCartCookie() {
+            const cartCookie = getCookie('cart');
+            if (cartCookie) {
+                cart = JSON.parse(cartCookie);
+            }
+
+            updateCartModal();
+            updateCartCounter(0);
         }
 
         function setCookie(name, value, hours) {
@@ -515,6 +552,12 @@
             }
 
             let item = searchInItems(cartItem.id);
+            if (item){
+                updateListBtns(cartItem, item);
+            }
+        }
+
+        function updateListBtns(cartItem, item) {
             if (cartItem.qty >= item.qty) {
                 document.getElementById('sellButton' + item.id).disabled = true
                 document.getElementById('checkoutButton' + item.id).disabled = true
@@ -539,9 +582,35 @@
             });
         });
 
+        function selectText() {
+            $("#searchInput").select();
+        }
+
         function catchError(error){
             console.error('Error: ', error);
             updateAlertMessage(error.message);
+        }
+
+        function retrieveFromServer(itemId) {
+            let endpoint = '/item/' + itemId + '?user=' + getCookie("username");
+
+            return fetch(endpoint)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            if (response.status === 401) {
+                                throw new Error("acceso denegado");
+                            }
+                            throw new Error(errorData.error);
+                        });
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    catchError(error);
+                    // Propagate the error to the caller
+                    throw error;
+                });
         }
     </script>
 </body>
